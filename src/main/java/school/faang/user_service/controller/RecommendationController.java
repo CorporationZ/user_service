@@ -13,6 +13,6 @@ public class RecommendationController {
 
     @PostMapping("/create")
     public ResponseEntity<?> giveRecommendation(@RequestBody RecommendationDto recommendationDto){
-
+        return ResponseEntity.ok("something");
     }
 }
