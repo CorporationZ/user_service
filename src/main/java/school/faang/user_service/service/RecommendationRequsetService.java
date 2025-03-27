@@ -1,0 +1,97 @@
+package school.faang.user_service.service;
+
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import school.faang.user_service.dto.RecommendationRequestDto;
+import school.faang.user_service.dto.RejectionDto;
+import school.faang.user_service.dto.RequestFilterDto;
+import school.faang.user_service.entity.RequestStatus;
+import school.faang.user_service.entity.Skill;
+import school.faang.user_service.entity.User;
+import school.faang.user_service.entity.recommendation.RecommendationRequest;
+import school.faang.user_service.entity.recommendation.SkillRequest;
+import school.faang.user_service.mapper.RecommendationRequestMapper;
+import school.faang.user_service.repository.SkillRepository;
+import school.faang.user_service.repository.UserRepository;
+import school.faang.user_service.repository.recommendation.RecommendationRequestRepository;
+import school.faang.user_service.repository.recommendation.SkillRequestRepository;
+
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.stream.Collectors;
+
+@Service
+@RequiredArgsConstructor
+public class RecommendationRequsetService {
+    private final RecommendationRequestRepository recommendationRequestRepository;
+    private final SkillRequestRepository skillRequestRepository;
+    private final UserRepository userRepository;
+    private final SkillRepository skillRepository;
+    private final RecommendationRequestMapper recommendationRequestMapper;
+
+    public RecommendationRequestDto create(RecommendationRequestDto requestDto) {
+        // Foydalanuvchilarni tekshirish
+        User requester = userRepository.findById(requestDto.requesterId()).orElseThrow(
+                () -> new IllegalArgumentException("User does not exist")
+        );
+        User receiver = userRepository.findById(requestDto.receiverId()).orElseThrow(
+                () -> new IllegalArgumentException("Receiver not found"));
+
+        LocalDateTime sixMonthsAgo = LocalDateTime.now().minusMonths(6);
+        boolean existsRecentRequest = recommendationRequestRepository.existsByRequesterIdAndReceiverIdAndCreatedAtAfter(
+                requestDto.requesterId(), requestDto.receiverId(), LocalDate.from(sixMonthsAgo));
+        if (existsRecentRequest) {
+            throw new IllegalStateException("Recommendation request can only be sent once every 6 months");
+        }
+
+        List<Skill> skills = skillRepository.findAllById(requestDto.skills());
+        if (skills.size() != requestDto.skills().size()) {
+            throw new IllegalArgumentException("Some skills do not exist in the database");
+        }
+        // Recommendation so‘rovini yaratish
+        RecommendationRequest recommendationRequest = recommendationRequestMapper.toEntity(requestDto);
+        recommendationRequest.setStatus(RequestStatus.PENDING);
+        recommendationRequest.setCreatedAt(LocalDateTime.now());
+        recommendationRequest.setUpdatedAt(LocalDateTime.now());
+
+        RecommendationRequest savedRequest = recommendationRequestRepository.save(recommendationRequest);
+
+        List<SkillRequest> skillRequests = skills.stream()
+                .map(skill -> new SkillRequest(savedRequest.getId(), skill.getId()))
+                .collect(Collectors.toList());
+        skillRequestRepository.saveAll(skillRequests);
+
+        return recommendationRequestMapper.toDto(savedRequest);
+
+    }
+    public List<RecommendationRequestDto> getRequests(RequestFilterDto filter) {
+        return recommendationRequestRepository.findAll().stream()
+                .filter(req -> filter.status() == null || req.getStatus().equals(filter.status()))
+                .filter(req -> filter.requesterId() == null || req.getRequester().equals(filter.requesterId()))
+                .filter(req -> filter.receiverId() == null || req.getReceiver().equals(filter.receiverId()))
+                .map(recommendationRequestMapper::toDto)
+                .collect(Collectors.toList());
+    }
+    public RecommendationRequestDto getRequest(long id) {
+        RecommendationRequest request = recommendationRequestRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Recommendation request not found"));
+        return recommendationRequestMapper.toDto(request);
+    }
+
+    public void rejectRequest(long id, RejectionDto rejection) {
+        RecommendationRequest request = recommendationRequestRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("Recommendation request not found"));
+
+        if (request.getStatus() != RequestStatus.PENDING) {
+            throw new IllegalStateException("Request is already processed");
+        }
+
+        request.setStatus(RequestStatus.REJECTED);
+        request.setRejectionReason(rejection.reason());
+        request.setUpdatedAt(LocalDateTime.now());
+
+        recommendationRequestRepository.save(request);
+    }
+    }
+

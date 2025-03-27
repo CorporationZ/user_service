@@ -30,4 +30,5 @@ public class SkillRequest {
     @ManyToOne
     @JoinColumn(name = "skill_id", nullable = false)
     private Skill skill;
+
 }
