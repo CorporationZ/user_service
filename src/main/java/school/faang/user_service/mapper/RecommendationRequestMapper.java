@@ -23,13 +23,13 @@ public interface RecommendationRequestMapper {
         if (skillIds == null) {
             return new ArrayList<>();
         }
-        return skillIds.stream()
+       /* return skillIds.stream()
                 .map(skillId -> {
                     SkillRequest skillRequest = new SkillRequest();
                     skillRequest.setSkill(skillId);
                     return skillRequest;
                 })
-                .collect(Collectors.toList());
+                .collect(Collectors.toList());*/
     }
 }
 
