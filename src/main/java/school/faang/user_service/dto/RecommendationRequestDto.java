@@ -4,6 +4,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.Generated;
 import lombok.Getter;
+import school.faang.user_service.entity.recommendation.SkillRequest;
 
 
 import java.time.LocalDateTime;
@@ -13,7 +14,7 @@ public record RecommendationRequestDto(
         Long id,
         String message,
         String status,
-        List<Long> skills,
+        List<SkillRequest> skills,
         Long requesterId,
         Long receiverId,
         LocalDateTime createdAt,

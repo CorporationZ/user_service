@@ -58,6 +58,10 @@ dependencies {
 
     implementation("com.fasterxml.jackson.dataformat:jackson-dataformat-csv:2.13.0")
 
+    // Map struct
+    implementation("org.mapstruct:mapstruct:1.5.3.Final")
+    annotationProcessor("org.mapstruct:mapstruct-processor:1.5.3.Final")
+
     /**
      * Test containers
      */
