@@ -32,24 +32,26 @@ public class RecommendationRequsetService {
 
     public RecommendationRequestDto create(RecommendationRequestDto requestDto) {
         // Foydalanuvchilarni tekshirish
-        User requester = userRepository.findById(requestDto.requesterId()).orElseThrow(
-                () -> new IllegalArgumentException("User does not exist")
-        );
-        User receiver = userRepository.findById(requestDto.receiverId()).orElseThrow(
-                () -> new IllegalArgumentException("Receiver not found"));
+        User requester = userRepository.findById(requestDto.requesterId())
+                .orElseThrow(() -> new IllegalArgumentException("User does not exist"));
+        User receiver = userRepository.findById(requestDto.receiverId())
+                .orElseThrow(() -> new IllegalArgumentException("Receiver not found"));
 
+// So‘nggi 6 oy ichida so‘rov yuborilganmi?
         LocalDateTime sixMonthsAgo = LocalDateTime.now().minusMonths(6);
         boolean existsRecentRequest = recommendationRequestRepository.existsByRequesterIdAndReceiverIdAndCreatedAtAfter(
-                requestDto.requesterId(), requestDto.receiverId(), LocalDate.from(sixMonthsAgo));
+                requestDto.requesterId(), requestDto.receiverId(), LocalDate.from(sixMonthsAgo)); //  `LocalDate.from(sixMonthsAgo)` o‘rniga `sixMonthsAgo`
         if (existsRecentRequest) {
             throw new IllegalStateException("Recommendation request can only be sent once every 6 months");
         }
 
+// Skill’larni tekshirish
         List<Skill> skills = skillRepository.findAllById(requestDto.skills());
         if (skills.size() != requestDto.skills().size()) {
             throw new IllegalArgumentException("Some skills do not exist in the database");
         }
-        // Recommendation so‘rovini yaratish
+
+// Recommendation so‘rovini yaratish
         RecommendationRequest recommendationRequest = recommendationRequestMapper.toEntity(requestDto);
         recommendationRequest.setStatus(RequestStatus.PENDING);
         recommendationRequest.setCreatedAt(LocalDateTime.now());
@@ -57,10 +59,19 @@ public class RecommendationRequsetService {
 
         RecommendationRequest savedRequest = recommendationRequestRepository.save(recommendationRequest);
 
+// SkillRequest obyektlarini yaratish
         List<SkillRequest> skillRequests = skills.stream()
-                .map(skill -> new SkillRequest(savedRequest.getId(), skill.getId()))
+                .map(skill -> {
+                    SkillRequest skillRequest = new SkillRequest(); // `null` emas, default konstruktor ishlatilmoqda
+                    skillRequest.setRequest(savedRequest);
+                    skillRequest.setSkill(skill);
+                    return skillRequest;
+                })
                 .collect(Collectors.toList());
+
+// Skill so‘rovlarini saqlash
         skillRequestRepository.saveAll(skillRequests);
+
 
         return recommendationRequestMapper.toDto(savedRequest);
 
@@ -79,7 +90,7 @@ public class RecommendationRequsetService {
         return recommendationRequestMapper.toDto(request);
     }
 
-    public void rejectRequest(long id, RejectionDto rejection) {
+    public RecommendationRequestDto rejectRequest(long id, RejectionDto rejection) {
         RecommendationRequest request = recommendationRequestRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Recommendation request not found"));
 
@@ -92,6 +103,9 @@ public class RecommendationRequsetService {
         request.setUpdatedAt(LocalDateTime.now());
 
         recommendationRequestRepository.save(request);
+
+        return recommendationRequestMapper.toDto(request);
     }
-    }
+
+}
 
