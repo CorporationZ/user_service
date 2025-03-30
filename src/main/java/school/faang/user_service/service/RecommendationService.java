@@ -2,8 +2,11 @@ package school.faang.user_service.service;
 
 import lombok.RequiredArgsConstructor;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import org.springframework.transaction.annotation.Transactional;
 import school.faang.user_service.dto.RecommendationDto;
 import school.faang.user_service.dto.SkillOfferDto;
 
@@ -16,6 +19,7 @@ import school.faang.user_service.repository.recommendation.RecommendationReposit
 import school.faang.user_service.repository.recommendation.SkillOfferRepository;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Optional;
 
 
@@ -44,30 +48,35 @@ public class RecommendationService {
             if (skillRepository.findById(skillOffer.skillId()).isEmpty()){
                 throw new DataValidationException("there is no skill with id:" + skillOffer.skillId());
             }
-            addSkill(skillOffer, recommendationId);
+            addSkill(skillOffer, recommendationId, dto.receiverId());
         }
         return recommendationId;
     }
 
-    public void addSkill(SkillOfferDto dto, Long recommendationId){
+    public void addSkill(SkillOfferDto dto, Long recommendationId, Long receiverId){
         if (dto == null || dto.skillId() == null || recommendationId == null){
             throw new DataValidationException("Skills and recommendations should not be empty");
         }
-        skillOfferRepository.create(dto.skillId(), recommendationId);
+        if (skillOfferRepository.findAllOffersOfSkill(dto.skillId(), receiverId).isEmpty()){
+            skillOfferRepository.create(dto.skillId(), recommendationId);
+        }
     }
 
-
+    @Transactional
     public void update(RecommendationDto dto) {
         validateRecommendation(dto);
-        Optional<Recommendation> recommendation = recommendationRepository.findFirstByAuthorIdAndReceiverIdOrderByCreatedAtDesc(dto.authorId(), dto.receiverId());
-        recommendationRepository.update(recommendation.get().getId(), dto.content());
-        skillOfferRepository.deleteAllByRecommendationId(recommendation.get().getId());
+        Recommendation recommendation = recommendationRepository
+                .findFirstByAuthorIdAndReceiverIdOrderByCreatedAtDesc(dto.authorId(), dto.receiverId())
+                .orElseThrow(() -> new DataValidationException("Recommendation not found for authorId: "
+                                                               + dto.authorId() + " and receiverId: " + dto.receiverId()));
+        recommendationRepository.update(recommendation.getId(), dto.content());
+        skillOfferRepository.deleteAllByRecommendationId(recommendation.getId());
 
         for (SkillOfferDto skillOffer : dto.skillOffers()){
             if (skillRepository.findById(skillOffer.skillId()).isEmpty()){
                 throw new DataValidationException("there is no skill with id:" + skillOffer.skillId());
             }
-            addSkill(skillOffer, recommendation.get().getId());
+            addSkill(skillOffer, recommendation.getId(), dto.receiverId());
         }
     }
 
@@ -83,6 +92,33 @@ public class RecommendationService {
     public void deleteRecommendation(Long id){
         recommendationRepository.deleteById(id);
         skillOfferRepository.deleteAllByRecommendationId(id);
+    }
+
+    public List<RecommendationDto> getAllUserRecommendations(Long receiverId){
+        Page<Recommendation> recommendation = recommendationRepository.findAllByReceiverId(receiverId, Pageable.unpaged());
+        return recommendation.stream()
+                .map(this::convertToDto).toList();
+    }
+
+    public List<RecommendationDto> getAllGivenRecommendations(Long authorId){
+        Page<Recommendation> recommendation = recommendationRepository.findAllByAuthorId(authorId, Pageable.unpaged());
+        return recommendation.stream()
+                .map(this::convertToDto).toList();
+    }
+
+    private RecommendationDto convertToDto(Recommendation recommendation) {
+        List<SkillOfferDto> skillOffers = recommendation.getSkillOffers().stream()
+                .map(skillOffer -> new SkillOfferDto(skillOffer.getId(), skillOffer.getSkill().getId()))
+                .toList();
+
+        return new RecommendationDto(
+                recommendation.getId(),
+                recommendation.getAuthor().getId(),
+                recommendation.getReceiver().getId(),
+                recommendation.getContent(),
+                skillOffers,
+                recommendation.getCreatedAt()
+        );
     }
 
 

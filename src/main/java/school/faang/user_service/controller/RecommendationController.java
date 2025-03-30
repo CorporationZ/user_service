@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.*;
 import school.faang.user_service.dto.RecommendationDto;
 import school.faang.user_service.service.RecommendationService;
 
+import java.util.List;
+
 
 @RestController
 @RequestMapping("/api/recommendations")
@@ -33,6 +35,17 @@ public class RecommendationController {
     public ResponseEntity<?> deleteRecommendation(@RequestParam Long id){
         recommendationService.deleteRecommendation(id);
         return ResponseEntity.status(HttpStatus.ACCEPTED).body("deleted");
+    }
+
+
+    @GetMapping("/receiver")
+    public ResponseEntity<List<RecommendationDto>> getAllUserRecommendations(@RequestParam Long id){
+        return ResponseEntity.status(HttpStatus.OK).body(recommendationService.getAllUserRecommendations(id));
+    }
+
+    @GetMapping("/author")
+    public ResponseEntity<List<RecommendationDto>> getAllGivenRecommendations(@RequestParam Long id){
+        return ResponseEntity.status(HttpStatus.OK).body(recommendationService.getAllGivenRecommendations(id));
     }
 
 
