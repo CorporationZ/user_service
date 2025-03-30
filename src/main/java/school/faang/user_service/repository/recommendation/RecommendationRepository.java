@@ -17,12 +17,33 @@ public interface RecommendationRepository extends CrudRepository<Recommendation,
             """)
     Long create(long authorId, long receiverId, String content);
 
+
     @Query(nativeQuery = true, value = """
-            UPDATE recommendation SET content = :content, updated_at = now()
-            WHERE author_id = :authorId AND receiver_id = :receiverId
+            DELETE FROM recommendation 
+            WHERE id = (
+                SELECT id FROM recommendation 
+                WHERE author_id = ?1 
+                ORDER BY id DESC 
+                LIMIT 1
+            ) RETURNING id
+            """)
+    Long deleteLastByAuthorId(long authorId);
+
+
+    @Query(nativeQuery = true, value = """
+                UPDATE recommendation 
+                SET content = ?3, updated_at = now()
+                WHERE id = (
+                    SELECT id FROM recommendation
+                    WHERE author_id = ?1 AND receiver_id = ?2
+                    ORDER BY created_at DESC
+                    LIMIT 1
+                )
+                RETURNING id
             """)
     @Modifying
-    void update(long authorId, long receiverId, String content);
+    Long update(long authorId, long receiverId, String content);
+
 
     Page<Recommendation> findAllByReceiverId(long receiverId, Pageable pageable);
 
