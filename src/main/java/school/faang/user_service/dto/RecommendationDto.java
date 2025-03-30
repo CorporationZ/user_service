@@ -6,6 +6,7 @@ import java.util.List;
 
 @Builder
 public record RecommendationDto(
+        Long id,
         Long authorId,
         Long receiverId,
         String content,
