@@ -1,9 +1,7 @@
 package school.faang.user_service.dto;
 
 import lombok.Builder;
-import lombok.Data;
-import lombok.Generated;
-import lombok.Getter;
+
 import school.faang.user_service.entity.recommendation.SkillRequest;
 
 
@@ -17,6 +15,8 @@ public record RecommendationRequestDto(
         List<SkillRequest> skills,
         Long requesterId,
         Long receiverId,
+        Long recommendationId,
+        String rejectionReason,
         LocalDateTime createdAt,
         LocalDateTime updatedAt
 ) {

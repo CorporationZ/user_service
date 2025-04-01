@@ -46,7 +46,7 @@ public class RecommendationRequsetService {
             throw new IllegalStateException("Recommendation request can only be sent once every 6 months");
         }
 
-//        Long requestId = RecommendationRequestRepository.
+        Long requestId = recommendationRequestRepository.create(requestDto.requesterId(), requestDto.receiverId(), requestDto.message(), requestDto.recommendationId());
 
         for (SkillRequest skill : requestDto.skills()) {
             if (skillRepository.findById(skill.getId()).isPresent()) {
@@ -64,16 +64,10 @@ public class RecommendationRequsetService {
 
 
         List<SkillRequest> skillRequests = requestDto.skills().stream()
-                .map(skill -> {
-                    SkillRequest skillRequest = new SkillRequest(); // `null` emas, default konstruktor ishlatilmoqda
-                    skillRequest.setRequest(requestDto.id());
-                    skillRequest.setSkill(skill.getSkill());
-                    return skillRequest;
-                })
-                .collect(Collectors.toList());
+                .map(skill -> skillRequestRepository.create(requestId, skill.getId())) // `create` metodidan foydalanish
+                .collect(Collectors.toList()); // List ga yig‘ish
 
 
-        skillRequestRepository.saveAll(skillRequests);
 
 
         return recommendationRequestMapper.toDto(savedRequest);

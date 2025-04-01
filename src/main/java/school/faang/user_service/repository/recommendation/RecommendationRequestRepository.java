@@ -20,5 +20,10 @@ public interface RecommendationRequestRepository extends JpaRepository<Recommend
     boolean existsByRequesterIdAndReceiverIdAndCreatedAtAfter(Long requesterId, Long receiverId, LocalDate createdAt);
 
 
+    @Query(nativeQuery = true, value = """
+            INSERT INTO recommendation (requester, receiver, message, recommendation_id)
+            VALUES (?1, ?2, ?3, ?4) returning id
+            """)
+    Long create(long requester, long receiver, String message, Long recommenderId);
 
 }
