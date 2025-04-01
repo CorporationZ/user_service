@@ -13,7 +13,7 @@ import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/recommendations")
+@RequestMapping("/recommendations")
 public class RecommendationRequestController {
 
     private final RecommendationRequsetService recommendationRequsetService;
