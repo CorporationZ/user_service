@@ -31,13 +31,13 @@ public class RecommendationRequsetService {
     private final RecommendationRequestMapper recommendationRequestMapper;
 
     public RecommendationRequestDto create(RecommendationRequestDto requestDto) {
-        // Foydalanuvchilarni tekshirish
+
         User requester = userRepository.findById(requestDto.requesterId())
                 .orElseThrow(() -> new IllegalArgumentException("User does not exist"));
         User receiver = userRepository.findById(requestDto.receiverId())
                 .orElseThrow(() -> new IllegalArgumentException("Receiver not found"));
 
-// So‘nggi 6 oy ichida so‘rov yuborilganmi?
+
         LocalDateTime sixMonthsAgo = LocalDateTime.now().minusMonths(6);
         boolean existsRecentRequest = recommendationRequestRepository.existsByRequesterIdAndReceiverIdAndCreatedAtAfter(
                 requestDto.requesterId(), requestDto.receiverId(), LocalDate.from(sixMonthsAgo)); //  `LocalDate.from(sixMonthsAgo)` o‘rniga `sixMonthsAgo`
@@ -45,13 +45,13 @@ public class RecommendationRequsetService {
             throw new IllegalStateException("Recommendation request can only be sent once every 6 months");
         }
 
-// Skill’larni tekshirish
+
         List<Skill> skills = skillRepository.findAllById(requestDto.skills());
         if (skills.size() != requestDto.skills().size()) {
             throw new IllegalArgumentException("Some skills do not exist in the database");
         }
 
-// Recommendation so‘rovini yaratish
+
         RecommendationRequest recommendationRequest = recommendationRequestMapper.toEntity(requestDto);
         recommendationRequest.setStatus(RequestStatus.PENDING);
         recommendationRequest.setCreatedAt(LocalDateTime.now());
@@ -59,7 +59,7 @@ public class RecommendationRequsetService {
 
         RecommendationRequest savedRequest = recommendationRequestRepository.save(recommendationRequest);
 
-// SkillRequest obyektlarini yaratish
+
         List<SkillRequest> skillRequests = skills.stream()
                 .map(skill -> {
                     SkillRequest skillRequest = new SkillRequest(); // `null` emas, default konstruktor ishlatilmoqda
@@ -69,7 +69,7 @@ public class RecommendationRequsetService {
                 })
                 .collect(Collectors.toList());
 
-// Skill so‘rovlarini saqlash
+
         skillRequestRepository.saveAll(skillRequests);
 
 
