@@ -9,6 +9,7 @@ import school.faang.user_service.entity.RequestStatus;
 import school.faang.user_service.entity.Skill;
 import school.faang.user_service.entity.User;
 import school.faang.user_service.entity.recommendation.RecommendationRequest;
+import school.faang.user_service.entity.recommendation.SkillOffer;
 import school.faang.user_service.entity.recommendation.SkillRequest;
 import school.faang.user_service.mapper.RecommendationRequestMapper;
 import school.faang.user_service.repository.SkillRepository;
@@ -45,10 +46,12 @@ public class RecommendationRequsetService {
             throw new IllegalStateException("Recommendation request can only be sent once every 6 months");
         }
 
+//        Long requestId = RecommendationRequestRepository.
 
-        List<Skill> skills = skillRepository.findAllById(requestDto.skills());
-        if (skills.size() != requestDto.skills().size()) {
-            throw new IllegalArgumentException("Some skills do not exist in the database");
+        for (SkillRequest skill : requestDto.skills()) {
+            if (skillRepository.findById(skill.getId()).isPresent()) {
+                throw new IllegalStateException("Skill already exists");
+            }
         }
 
 
@@ -60,11 +63,11 @@ public class RecommendationRequsetService {
         RecommendationRequest savedRequest = recommendationRequestRepository.save(recommendationRequest);
 
 
-        List<SkillRequest> skillRequests = skills.stream()
+        List<SkillRequest> skillRequests = requestDto.skills().stream()
                 .map(skill -> {
                     SkillRequest skillRequest = new SkillRequest(); // `null` emas, default konstruktor ishlatilmoqda
-                    skillRequest.setRequest(savedRequest);
-                    skillRequest.setSkill(skill);
+                    skillRequest.setRequest(requestDto.id());
+                    skillRequest.setSkill(skill.getSkill());
                     return skillRequest;
                 })
                 .collect(Collectors.toList());
@@ -81,6 +84,8 @@ public class RecommendationRequsetService {
                 .filter(req -> filter.status() == null || req.getStatus().equals(filter.status()))
                 .filter(req -> filter.requesterId() == null || req.getRequester().equals(filter.requesterId()))
                 .filter(req -> filter.receiverId() == null || req.getReceiver().equals(filter.receiverId()))
+                .filter(req -> filter.createdAt() == null || !req.getCreatedAt().equals(filter.createdAt()))
+                .filter(req -> filter.updatedAt() == null || !req.getUpdatedAt().equals(filter.updatedAt()))
                 .map(recommendationRequestMapper::toDto)
                 .collect(Collectors.toList());
     }

@@ -20,4 +20,5 @@ public interface RecommendationRequestRepository extends JpaRepository<Recommend
     boolean existsByRequesterIdAndReceiverIdAndCreatedAtAfter(Long requesterId, Long receiverId, LocalDate createdAt);
 
 
+
 }

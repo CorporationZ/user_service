@@ -48,5 +48,4 @@ public interface SkillRepository extends JpaRepository<Skill, Long> {
             """)
     List<Skill> findSkillsByGoalId(long goalId);
 
-    List<Skill> findAllById(List<SkillRequest> skills);
 }

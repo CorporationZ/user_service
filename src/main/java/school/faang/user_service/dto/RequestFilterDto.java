@@ -10,6 +10,6 @@ public record RequestFilterDto(
         Long requesterId,
         Long receiverId,
         RequestStatus status,
-        LocalDate fromDate,
-        LocalDate toDate
+        LocalDate createdAt,
+        LocalDate updatedAt
 ) {}
