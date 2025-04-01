@@ -1,5 +1,6 @@
 package school.faang.user_service.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import org.springframework.http.ResponseEntity;
@@ -19,7 +20,7 @@ public class RecommendationRequestController {
     private final RecommendationRequsetService recommendationRequsetService;
 
     @PostMapping("/create")
-    public ResponseEntity<RecommendationRequestDto> requestRecommendation(@RequestBody RecommendationRequestDto requestDto) {
+    public ResponseEntity<RecommendationRequestDto> requestRecommendation(@Valid  @RequestBody RecommendationRequestDto requestDto) {
         RecommendationRequestDto createdRequest = recommendationRequsetService.create(requestDto);
         return ResponseEntity.ok(createdRequest);
     }

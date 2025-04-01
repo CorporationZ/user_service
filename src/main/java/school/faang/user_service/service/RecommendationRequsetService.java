@@ -65,7 +65,7 @@ public class RecommendationRequsetService {
 
         List<SkillRequest> skillRequests = requestDto.skills().stream()
                 .map(skill -> skillRequestRepository.create(requestId, skill.getId())) // `create` metodidan foydalanish
-                .collect(Collectors.toList()); // List ga yig‘ish
+                .collect(Collectors.toList());
 
 
 

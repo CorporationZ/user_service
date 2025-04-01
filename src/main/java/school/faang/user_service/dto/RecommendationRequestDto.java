@@ -9,7 +9,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 @Builder
 public record RecommendationRequestDto(
-        Long id,
         String message,
         String status,
         List<SkillRequest> skills,
