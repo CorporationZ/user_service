@@ -21,7 +21,7 @@ public class SkillRequest {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private long id;
+    private Long id;
 
     @ManyToOne
     @JoinColumn(name = "request_id", nullable = false)
@@ -30,4 +30,5 @@ public class SkillRequest {
     @ManyToOne
     @JoinColumn(name = "skill_id", nullable = false)
     private Skill skill;
+
 }
