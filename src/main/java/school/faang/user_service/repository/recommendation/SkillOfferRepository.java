@@ -1,7 +1,10 @@
 package school.faang.user_service.repository.recommendation;
 
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.CrudRepository;
+import org.springframework.data.repository.query.Param;
+import org.springframework.transaction.annotation.Transactional;
 import school.faang.user_service.entity.recommendation.SkillOffer;
 
 import java.util.List;
@@ -11,7 +14,15 @@ public interface SkillOfferRepository extends CrudRepository<SkillOffer, Long> {
     @Query(nativeQuery = true, value = "INSERT INTO skill_offer (skill_id, recommendation_id) VALUES (?1, ?2) returning id")
     Long create(long skillId, long recommendationId);
 
-    void deleteAllByRecommendationId(long recommendationId);
+
+    @Modifying
+    @Transactional
+    @Query(value = """
+            delete FROM skill_offer so
+            WHERE so.recommendation_id = :recommendationId
+            """, nativeQuery = true)
+    void deleteAllByRecommendationId(@Param("recommendationId") long recommendationId);
+
 
     @Query(nativeQuery = true, value = """
             SELECT COUNT(so.id) FROM skill_offer so
